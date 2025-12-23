@@ -2,90 +2,68 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Why FHE Matters</title>
+<title>Knowledge Boundary Simulator</title>
 
 <style>
   body {
     margin: 0;
-    background: #05070f;
+    background: #020617;
     color: #e5e7eb;
     font-family: Inter, system-ui, sans-serif;
   }
 
-  .wrap {
-    max-width: 1200px;
+  .container {
+    max-width: 1100px;
     margin: auto;
-    padding: 40px;
+    padding: 48px 32px;
   }
 
   h1 {
-    text-align: center;
-    font-size: 34px;
-    margin-bottom: 6px;
+    font-size: 36px;
+    margin-bottom: 8px;
   }
 
   .sub {
-    text-align: center;
-    opacity: 0.7;
+    opacity: 0.65;
     margin-bottom: 40px;
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-  }
-
-  .chain {
-    border-radius: 18px;
-    padding: 24px;
-    background: linear-gradient(180deg, #020617, #000);
-    border: 1px solid #1e293b;
-  }
-
-  .chain h2 {
-    margin-top: 0;
-    font-size: 20px;
-  }
-
-  .danger {
-    color: #fb7185;
-  }
-
-  .safe {
-    color: #34d399;
   }
 
   input {
     width: 100%;
-    padding: 14px;
+    padding: 16px;
     background: #020617;
     border: 1px solid #334155;
-    border-radius: 10px;
+    border-radius: 12px;
     color: white;
-    font-size: 15px;
-    margin-bottom: 14px;
+    font-size: 16px;
+    margin-bottom: 20px;
   }
 
   button {
-    width: 100%;
-    padding: 14px;
+    padding: 14px 22px;
     border-radius: 12px;
     border: none;
     font-weight: 700;
-    cursor: pointer;
-    background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+    background: #38bdf8;
     color: #020617;
+    cursor: pointer;
   }
 
-  .log {
-    margin-top: 16px;
-    padding: 14px;
-    border-radius: 10px;
-    background: #020617;
-    font-size: 13px;
-    min-height: 120px;
-    white-space: pre-line;
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 40px;
+  }
+
+  th, td {
+    padding: 16px;
+    border-bottom: 1px solid #1e293b;
+    text-align: left;
+    font-size: 15px;
+  }
+
+  th {
+    opacity: 0.6;
   }
 
   .leak {
@@ -93,66 +71,96 @@
     font-weight: 600;
   }
 
-  .lock {
+  .locked {
     color: #34d399;
     font-weight: 600;
+  }
+
+  .partial {
+    color: #facc15;
+    font-weight: 600;
+  }
+
+  .footer {
+    margin-top: 40px;
+    opacity: 0.5;
+    font-size: 13px;
   }
 </style>
 </head>
 
 <body>
-<div class="wrap">
+<div class="container">
 
-<h1>Public Blockchain vs FHE</h1>
+<h1>Knowledge Boundary</h1>
 <div class="sub">
-Same input. Very different consequences.
+Who knows what during a transaction?
 </div>
 
-<input id="value" placeholder="Enter private data (salary, bid, vote)" />
+<input id="secret" placeholder="Enter sensitive value (salary, bid, vote)" />
+<button onclick="run()">Submit Transaction</button>
 
-<button onclick="run()">Send Transaction</button>
+<table>
+  <thead>
+    <tr>
+      <th>Actor</th>
+      <th>Normal Blockchain</th>
+      <th>FHE / CoFHE Chain</th>
+    </tr>
+  </thead>
+  <tbody id="rows">
+    <tr><td colspan="3">Waiting for transaction…</td></tr>
+  </tbody>
+</table>
 
-<div class="grid">
-
-  <!-- NORMAL -->
-  <div class="chain">
-    <h2 class="danger">❌ Normal Blockchain</h2>
-    <div class="log" id="normalLog">
-Waiting…
-    </div>
-  </div>
-
-  <!-- FHE -->
-  <div class="chain">
-    <h2 class="safe">✅ FHE / CoFHE Chain</h2>
-    <div class="log" id="fheLog">
-Waiting…
-    </div>
-  </div>
-
+<div class="footer">
+This models information access — not cryptography.
 </div>
+
 </div>
 
 <script>
 function run() {
-  const v = document.getElementById("value").value;
-  if (!v) return alert("Enter something");
+  const v = document.getElementById("secret").value;
+  if (!v) return alert("Enter a value");
 
-  // NORMAL CHAIN
-  document.getElementById("normalLog").innerText =
-`📦 Transaction Broadcast
-👀 Validators see: ${v}
-🤖 MEV bot detects value
-🔎 Explorer shows: ${v}
-⚠️ Data permanently public`;
-
-  // FHE CHAIN
-  document.getElementById("fheLog").innerText =
-`📦 Encrypted Transaction
-🔒 Validators see: ********
-🤖 MEV bot sees: noise
-🔎 Explorer shows: ciphertext
-✅ Plaintext never exposed`;
+  document.getElementById("rows").innerHTML = `
+<tr>
+  <td>User</td>
+  <td class="leak">Sees plaintext (${v})</td>
+  <td class="leak">Sees plaintext (${v})</td>
+</tr>
+<tr>
+  <td>Mempool</td>
+  <td class="leak">Sees plaintext</td>
+  <td class="locked">Sees ciphertext only</td>
+</tr>
+<tr>
+  <td>Validator</td>
+  <td class="leak">Reads full value</td>
+  <td class="locked">Cannot decrypt</td>
+</tr>
+<tr>
+  <td>MEV Bot</td>
+  <td class="leak">Extracts signal</td>
+  <td class="locked">No usable signal</td>
+</tr>
+<tr>
+  <td>Indexer / Explorer</td>
+  <td class="leak">Public forever</td>
+  <td class="locked">Encrypted forever</td>
+</tr>
+<tr>
+  <td>Smart Contract</td>
+  <td class="leak">Processes plaintext</td>
+  <td class="partial">Computes on encrypted data</td>
+</tr>
+<tr>
+  <td>Final State</td>
+  <td class="leak">Plaintext stored</td>
+  <td class="locked">Encrypted state</td>
+</tr>
+`;
 }
 </script>
 
