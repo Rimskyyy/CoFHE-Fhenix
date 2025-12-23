@@ -1,214 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Encrypted Compute Demo | CoFHE</title>
+<meta charset="UTF-8" />
+<title>Why FHE Matters</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: Inter, system-ui, sans-serif;
-    }
+<style>
+  body {
+    margin: 0;
+    background: #05070f;
+    color: #e5e7eb;
+    font-family: Inter, system-ui, sans-serif;
+  }
 
-    body {
-      margin: 0;
-      background: radial-gradient(circle at top, #020617, #000);
-      color: #e5e7eb;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+  .wrap {
+    max-width: 1200px;
+    margin: auto;
+    padding: 40px;
+  }
 
-    .container {
-      width: 900px;
-      background: rgba(2,6,23,0.95);
-      border: 1px solid #1e293b;
-      border-radius: 18px;
-      padding: 30px;
-      box-shadow: 0 0 80px rgba(56,189,248,0.15);
-    }
+  h1 {
+    text-align: center;
+    font-size: 34px;
+    margin-bottom: 6px;
+  }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 6px;
-      font-size: 28px;
-    }
+  .sub {
+    text-align: center;
+    opacity: 0.7;
+    margin-bottom: 40px;
+  }
 
-    .subtitle {
-      text-align: center;
-      font-size: 14px;
-      opacity: 0.7;
-      margin-bottom: 30px;
-    }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 20px;
-    }
+  .chain {
+    border-radius: 18px;
+    padding: 24px;
+    background: linear-gradient(180deg, #020617, #000);
+    border: 1px solid #1e293b;
+  }
 
-    .card {
-      background: #020617;
-      border: 1px solid #1e293b;
-      border-radius: 14px;
-      padding: 18px;
-      min-height: 220px;
-    }
+  .chain h2 {
+    margin-top: 0;
+    font-size: 20px;
+  }
 
-    .card h3 {
-      margin: 0 0 10px 0;
-      font-size: 16px;
-    }
+  .danger {
+    color: #fb7185;
+  }
 
-    .tag {
-      display: inline-block;
-      font-size: 11px;
-      background: #0f172a;
-      padding: 4px 8px;
-      border-radius: 999px;
-      margin-bottom: 12px;
-      opacity: 0.8;
-    }
+  .safe {
+    color: #34d399;
+  }
 
-    input {
-      width: 100%;
-      padding: 10px;
-      background: #020617;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      color: white;
-      font-size: 14px;
-    }
+  input {
+    width: 100%;
+    padding: 14px;
+    background: #020617;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    color: white;
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
 
-    button {
-      margin-top: 14px;
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: linear-gradient(90deg, #38bdf8, #0ea5e9);
-      color: #020617;
-      font-weight: 700;
-      cursor: pointer;
-    }
+  button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+    color: #020617;
+  }
 
-    button:hover {
-      opacity: 0.9;
-    }
+  .log {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 10px;
+    background: #020617;
+    font-size: 13px;
+    min-height: 120px;
+    white-space: pre-line;
+  }
 
-    .box {
-      margin-top: 12px;
-      padding: 10px;
-      background: #020617;
-      border: 1px dashed #334155;
-      border-radius: 8px;
-      font-size: 12px;
-      word-break: break-all;
-      min-height: 44px;
-    }
+  .leak {
+    color: #fb7185;
+    font-weight: 600;
+  }
 
-    .status {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 13px;
-      opacity: 0.85;
-    }
-
-    .highlight {
-      color: #38bdf8;
-      font-weight: 600;
-    }
-  </style>
+  .lock {
+    color: #34d399;
+    font-weight: 600;
+  }
+</style>
 </head>
 
 <body>
+<div class="wrap">
 
-<div class="container">
-  <h1>🔐 Encrypted Computation (CoFHE)</h1>
-  <div class="subtitle">
-    Public blockchain · Private data · No plaintext exposure
+<h1>Public Blockchain vs FHE</h1>
+<div class="sub">
+Same input. Very different consequences.
+</div>
+
+<input id="value" placeholder="Enter private data (salary, bid, vote)" />
+
+<button onclick="run()">Send Transaction</button>
+
+<div class="grid">
+
+  <!-- NORMAL -->
+  <div class="chain">
+    <h2 class="danger">❌ Normal Blockchain</h2>
+    <div class="log" id="normalLog">
+Waiting…
+    </div>
   </div>
 
-  <div class="grid">
-
-    <!-- USER -->
-    <div class="card">
-      <span class="tag">USER</span>
-      <h3>Private Input</h3>
-
-      <input type="number" id="inputValue" placeholder="Enter secret number">
-
-      <button onclick="start()">Encrypt & Send</button>
-
-      <div class="box" id="encryptedInput">Encrypted value appears here</div>
+  <!-- FHE -->
+  <div class="chain">
+    <h2 class="safe">✅ FHE / CoFHE Chain</h2>
+    <div class="log" id="fheLog">
+Waiting…
     </div>
-
-    <!-- BLOCKCHAIN -->
-    <div class="card">
-      <span class="tag">BLOCKCHAIN / CoFHE</span>
-      <h3>Encrypted Compute</h3>
-
-      <div class="box" id="computeLog">
-        Waiting for encrypted data…
-      </div>
-    </div>
-
-    <!-- USER -->
-    <div class="card">
-      <span class="tag">USER</span>
-      <h3>Decrypted Result</h3>
-
-      <div class="box" id="finalResult">
-        Only user can decrypt
-      </div>
-    </div>
-
   </div>
 
-  <div class="status" id="statusText">
-    ⚠️ Blockchain never sees plaintext
-  </div>
+</div>
 </div>
 
 <script>
-  function encrypt(x) {
-    return btoa(x * 9 + 2025);
-  }
+function run() {
+  const v = document.getElementById("value").value;
+  if (!v) return alert("Enter something");
 
-  function decrypt(x) {
-    return (atob(x) - 2025) / 9;
-  }
+  // NORMAL CHAIN
+  document.getElementById("normalLog").innerText =
+`📦 Transaction Broadcast
+👀 Validators see: ${v}
+🤖 MEV bot detects value
+🔎 Explorer shows: ${v}
+⚠️ Data permanently public`;
 
-  function start() {
-    const val = document.getElementById("inputValue").value;
-    if (!val) return alert("Enter a value");
-
-    const enc = encrypt(Number(val));
-    document.getElementById("encryptedInput").innerText = enc;
-
-    document.getElementById("computeLog").innerText =
-      "Processing encrypted data...\n(no plaintext access)";
-
-    document.getElementById("statusText").innerHTML =
-      "🔄 Computing on <span class='highlight'>encrypted data</span>…";
-
-    setTimeout(() => {
-      const encResult = encrypt(decrypt(enc) * 2);
-      document.getElementById("computeLog").innerText =
-        "Encrypted result generated:\n" + encResult;
-
-      setTimeout(() => {
-        const result = decrypt(encResult);
-        document.getElementById("finalResult").innerText =
-          "Result: " + result;
-
-        document.getElementById("statusText").innerHTML =
-          "✅ Privacy preserved end-to-end";
-      }, 1000);
-
-    }, 1200);
-  }
+  // FHE CHAIN
+  document.getElementById("fheLog").innerText =
+`📦 Encrypted Transaction
+🔒 Validators see: ********
+🤖 MEV bot sees: noise
+🔎 Explorer shows: ciphertext
+✅ Plaintext never exposed`;
+}
 </script>
 
 </body>
