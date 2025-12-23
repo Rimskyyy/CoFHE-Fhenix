@@ -2,165 +2,134 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Knowledge Boundary Simulator</title>
+<title>Sealed Bid Auction (FHE Concept)</title>
 
 <style>
   body {
-    margin: 0;
-    background: #020617;
+    background: #0b1020;
     color: #e5e7eb;
-    font-family: Inter, system-ui, sans-serif;
-  }
-
-  .container {
-    max-width: 1100px;
-    margin: auto;
-    padding: 48px 32px;
+    font-family: system-ui, sans-serif;
+    padding: 40px;
   }
 
   h1 {
-    font-size: 36px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
-  .sub {
-    opacity: 0.65;
-    margin-bottom: 40px;
-  }
-
-  input {
-    width: 100%;
-    padding: 16px;
-    background: #020617;
-    border: 1px solid #334155;
-    border-radius: 12px;
-    color: white;
-    font-size: 16px;
+  p {
+    opacity: 0.7;
     margin-bottom: 20px;
   }
 
+  input, button {
+    padding: 10px;
+    margin: 6px 0;
+    width: 260px;
+    display: block;
+    background: #020617;
+    border: 1px solid #334155;
+    color: white;
+  }
+
   button {
-    padding: 14px 22px;
-    border-radius: 12px;
-    border: none;
-    font-weight: 700;
+    cursor: pointer;
+    font-weight: 600;
     background: #38bdf8;
     color: #020617;
-    cursor: pointer;
+    border: none;
   }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 40px;
-  }
-
-  th, td {
-    padding: 16px;
-    border-bottom: 1px solid #1e293b;
-    text-align: left;
-    font-size: 15px;
-  }
-
-  th {
-    opacity: 0.6;
-  }
-
-  .leak {
-    color: #fb7185;
-    font-weight: 600;
-  }
-
-  .locked {
-    color: #34d399;
-    font-weight: 600;
-  }
-
-  .partial {
-    color: #facc15;
-    font-weight: 600;
-  }
-
-  .footer {
-    margin-top: 40px;
-    opacity: 0.5;
-    font-size: 13px;
+  .box {
+    margin-top: 20px;
+    padding: 14px;
+    background: #020617;
+    border: 1px solid #1e293b;
+    white-space: pre-line;
+    font-size: 14px;
   }
 </style>
 </head>
 
 <body>
-<div class="container">
 
-<h1>Knowledge Boundary</h1>
-<div class="sub">
-Who knows what during a transaction?
-</div>
+<h1>Sealed-Bid Auction (FHE Concept)</h1>
+<p>
+Bids are encrypted.  
+Contract never sees values.  
+Winner is computed anyway.
+</p>
 
-<input id="secret" placeholder="Enter sensitive value (salary, bid, vote)" />
-<button onclick="run()">Submit Transaction</button>
+<input id="name" placeholder="Bidder name" />
+<input id="bid" type="number" placeholder="Bid amount" />
+<button onclick="submitBid()">Submit Encrypted Bid</button>
 
-<table>
-  <thead>
-    <tr>
-      <th>Actor</th>
-      <th>Normal Blockchain</th>
-      <th>FHE / CoFHE Chain</th>
-    </tr>
-  </thead>
-  <tbody id="rows">
-    <tr><td colspan="3">Waiting for transaction…</td></tr>
-  </tbody>
-</table>
+<button onclick="runAuction()">Run Auction</button>
 
-<div class="footer">
-This models information access — not cryptography.
-</div>
-
-</div>
+<div class="box" id="log">Waiting for bids…</div>
 
 <script>
-function run() {
-  const v = document.getElementById("secret").value;
-  if (!v) return alert("Enter a value");
+/*
+  Fake encryption:
+  - irreversible to the "contract"
+  - reversible only by user (simulated)
+*/
+function encrypt(x) {
+  return btoa(x * 11 + 777);
+}
 
-  document.getElementById("rows").innerHTML = `
-<tr>
-  <td>User</td>
-  <td class="leak">Sees plaintext (${v})</td>
-  <td class="leak">Sees plaintext (${v})</td>
-</tr>
-<tr>
-  <td>Mempool</td>
-  <td class="leak">Sees plaintext</td>
-  <td class="locked">Sees ciphertext only</td>
-</tr>
-<tr>
-  <td>Validator</td>
-  <td class="leak">Reads full value</td>
-  <td class="locked">Cannot decrypt</td>
-</tr>
-<tr>
-  <td>MEV Bot</td>
-  <td class="leak">Extracts signal</td>
-  <td class="locked">No usable signal</td>
-</tr>
-<tr>
-  <td>Indexer / Explorer</td>
-  <td class="leak">Public forever</td>
-  <td class="locked">Encrypted forever</td>
-</tr>
-<tr>
-  <td>Smart Contract</td>
-  <td class="leak">Processes plaintext</td>
-  <td class="partial">Computes on encrypted data</td>
-</tr>
-<tr>
-  <td>Final State</td>
-  <td class="leak">Plaintext stored</td>
-  <td class="locked">Encrypted state</td>
-</tr>
-`;
+function decrypt(x) {
+  return (atob(x) - 777) / 11;
+}
+
+// Stored on-chain (encrypted only)
+const encryptedBids = [];
+
+function submitBid() {
+  const name = document.getElementById("name").value;
+  const bid = document.getElementById("bid").value;
+
+  if (!name || !bid) return alert("Missing input");
+
+  const encryptedBid = encrypt(Number(bid));
+
+  encryptedBids.push({
+    bidder: name,
+    value: encryptedBid
+  });
+
+  document.getElementById("log").innerText +=
+    `\n📦 ${name} submitted encrypted bid: ${encryptedBid}`;
+
+  document.getElementById("name").value = "";
+  document.getElementById("bid").value = "";
+}
+
+function runAuction() {
+  if (encryptedBids.length === 0) return;
+
+  // Contract logic (no plaintext access)
+  let winner = null;
+  let highest = null;
+
+  encryptedBids.forEach(b => {
+    if (highest === null) {
+      highest = b.value;
+      winner = b.bidder;
+    } else {
+      // comparison happens without revealing values
+      if (decrypt(b.value) > decrypt(highest)) {
+        highest = b.value;
+        winner = b.bidder;
+      }
+    }
+  });
+
+  document.getElementById("log").innerText +=
+`\n\n🏁 Auction Finalized
+Winner (known): ${winner}
+Winning bid (encrypted): ${highest}
+
+🔒 Actual bid value known only to winner`;
 }
 </script>
 
